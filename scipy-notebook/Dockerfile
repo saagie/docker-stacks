@@ -6,11 +6,11 @@ MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
 USER root
 
-# libav-tools for matplotlib anim
+libav-tools for matplotlib anim
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libav-tools && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+   apt-get install -y --no-install-recommends libav-tools && \
+   apt-get clean && \
+   rm -rf /var/lib/apt/lists/*
 
 USER $NB_USER
 
@@ -44,6 +44,37 @@ RUN conda install --quiet --yes \
     conda remove --quiet --yes --force qt pyqt && \
     conda clean -tipsy
 
+# add library (https://creativedata.atlassian.net/browse/PRODUCT-514)
+RUN conda install --quiet --yes \
+    'lxml=3.8.*' \
+    'tabula-py=1.1.*' \
+	'tika=1.16*' \
+	'xlwt=1.3.*' \
+	'nltk=3.2*' \
+	'python-levenshtein=0.12.*' \
+	'joblib=0.12.*' \
+	'gensim=3.5.*' \
+	'django=2.1*' \
+	'jellyfish=0.6.*' \
+	'openpyxl=2.5.*' \
+	'scrapy=1.5.*' \
+	'simplejson=3.16.*' \
+	'curl=7.61.*' \
+	'elasticsearch=6.*' \
+	'fastparquet=0.*' \
+	'spacy=2.0.*' \
+	'pycrypto=2.6.*'
+RUN pip --no-cache-dir install \
+	'addok==1.0.*' \
+	'tensorflow==1.10.*' \
+	'keras==2.2.*' \
+	'tokenizer==1.0.*' \
+	'apiclient==1.0.*' \
+	'crypto==1.4.*'
+	
+	
+	
+	
 # Activate ipywidgets extension in the environment that runs the notebook server
 RUN jupyter nbextension enable --py widgetsnbextension --sys-prefix
 
