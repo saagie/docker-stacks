@@ -6,9 +6,10 @@ MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
 USER root
 
-libav-tools for matplotlib anim
+# libav-tools for matplotlib anim
+# apt-get install -y --no-install-recommends libav-tools && \
 RUN apt-get update && \
-   apt-get install -y --no-install-recommends libav-tools && \
+   \
    apt-get clean && \
    rm -rf /var/lib/apt/lists/*
 
