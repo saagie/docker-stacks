@@ -14,6 +14,9 @@ RUN apt-get -y update && \
     apt-get install --no-install-recommends -y openjdk-8-jre-headless ca-certificates-java && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN sudo apt-get update && \
+    sudo apt-get install acl
 	
 RUN cd /tmp && \
         wget -q http://d3kbcqa49mib13.cloudfront.net/spark-${APACHE_SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
@@ -32,7 +35,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
     apt-get -y update && \
     apt-get --no-install-recommends -y install mesos=1.3.1-2.0.1 && \
     apt-get clean && \
-rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
 
 # Spark and Mesos config
 ENV SPARK_HOME /usr/local/spark
