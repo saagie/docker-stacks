@@ -1,6 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-FROM saagie/scipy-notebook:PRODUCT-514
+FROM saagie/scipy-notebook:PM-128
 
 MAINTAINER Saagie
 
