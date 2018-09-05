@@ -62,7 +62,7 @@ RUN /bin/bash -c "source activate py35 && \
 # Install Python 2 packages
 # Remove pyqt and qt pulled in for matplotlib since we're only ever going to
 # use notebook-friendly backends in these images
-RUN /bin/bash -c "source activate py2 && \
+RUN /bin/bash -c "source activate py27 && \
     conda create --yes -p $CONDA_DIR/envs/python2 python=2.7 \
     'nomkl' \
     'ipython=5.3*' \
