@@ -6,18 +6,29 @@ MAINTAINER Jupyter Project <jupyter@googlegroups.com>
 
 USER root
 
-# libav-tools for matplotlib anim
+# ffmpeg for matplotlib anim
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libav-tools && \
+    apt-get install -y --no-install-recommends ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 USER $NB_USER
 
+RUN conda create -y -n py35 python=3.5.2 && \
+    /bin/bash -c "source activate py35 && \
+	python3 -m pip install ipykernel && \
+	ipython kernel install --user"
+	
+RUN conda create -y -n py27 python=2.7 && \
+    /bin/bash -c "source activate py27 && \
+	python2 -m pip install ipykernel && \
+	ipython kernel install --user"
+
 # Install Python 3 packages
 # Remove pyqt and qt pulled in for matplotlib since we're only ever going to
 # use notebook-friendly backends in these images
-RUN conda install --quiet --yes \
+RUN /bin/bash -c "source activate py35 && \
+    conda install --yes \
     'nomkl' \
     'ipywidgets=6.0*' \
     'pandas=0.19*' \
@@ -42,15 +53,17 @@ RUN conda install --quiet --yes \
     'beautifulsoup4=4.5.*' \
     'xlrd'  && \
     conda remove --quiet --yes --force qt pyqt && \
-    conda clean -tipsy
+    conda clean -tipsy "
 
 # Activate ipywidgets extension in the environment that runs the notebook server
-RUN jupyter nbextension enable --py widgetsnbextension --sys-prefix
+RUN /bin/bash -c "source activate py35 && \
+    jupyter nbextension enable --py widgetsnbextension --sys-prefix"
 
 # Install Python 2 packages
 # Remove pyqt and qt pulled in for matplotlib since we're only ever going to
 # use notebook-friendly backends in these images
-RUN conda create --quiet --yes -p $CONDA_DIR/envs/python2 python=2.7 \
+RUN /bin/bash -c "source activate py2 && \
+    conda create --yes -p $CONDA_DIR/envs/python2 python=2.7 \
     'nomkl' \
     'ipython=5.3*' \
     'ipywidgets=6.0*' \
@@ -77,7 +90,8 @@ RUN conda create --quiet --yes -p $CONDA_DIR/envs/python2 python=2.7 \
     'beautifulsoup4=4.5.*' \
     'xlrd' && \
     conda remove -n python2 --quiet --yes --force qt pyqt && \
-    conda clean -tipsy
+    conda clean -tipsy"
+	
 # Add shortcuts to distinguish pip for python2 and python3 envs
 RUN ln -s $CONDA_DIR/envs/python2/bin/pip $CONDA_DIR/bin/pip2 && \
     ln -s $CONDA_DIR/bin/pip $CONDA_DIR/bin/pip3
@@ -96,9 +110,9 @@ USER root
 # switching at runtime and to allow the notebook server running out of the root
 # environment to find it. Also, activate the python2 environment upon kernel
 # launch.
-RUN pip install kernda --no-cache && \
-    $CONDA_DIR/envs/python2/bin/python -m ipykernel install && \
-    kernda -o -y /usr/local/share/jupyter/kernels/python2/kernel.json && \
-    pip uninstall kernda -y
+# RUN pip install kernda --no-cache && \
+#     $CONDA_DIR/envs/python2/bin/python -m ipykernel install && \
+#     kernda -o -y /usr/local/share/jupyter/kernels/python2/kernel.json && \
+#     pip uninstall kernda -y
 
 USER $NB_USER
