@@ -20,11 +20,12 @@ RUN mkdir -p /usr/share/man/man1 && \
     rm -rf /var/lib/apt/lists/*
 
 #Installing Spark
-RUN wget https://nexus.saagie.tech/content/repositories/thirdparty/org/apache/spark/spark2.3.0-cloudera4-saagie/spark-spark2.3.0-cloudera4-saagie-saagie.tgz -P /tmp \
- && tar -zxf /tmp/spark-spark2.3.0-cloudera4-saagie-saagie.tgz -C /usr/local/  --owner root --group root --no-same-owner \
- && ln -s /usr/local/spark-2.3.0.cloudera4-bin-spark2.3.0-saagie/ /usr/local/spark \
- && ln -s /usr/local/spark-2.3.0.cloudera4-bin-spark2.3.0-saagie/ /usr/local/spark2
-
+RUN wget https://nexus.saagie.tech/service/local/repositories/thirdparty/content/org/apache/spark/2.3.0.cloudera4/spark-2.3.0.cloudera4.tgz -P /tmp \
+    && tar -zxf /tmp/spark-2.3.0.cloudera4.tgz -C /usr/local/  \
+    && ln -s /usr/local/spark-2.3.0.cloudera4-bin-spark2.3.0-saagie/ /usr/local/spark \
+    && ln -s /usr/local/spark-2.3.0.cloudera4-bin-spark2.3.0-saagie/ /usr/local/spark2 \
+    && rm /tmp/spark-2.3.0.cloudera4.tgz
+  
 # Mesos dependencies
 COPY mesos.key /tmp/
 # PATCH for issue MARATHON-7694 (https://jira.mesosphere.com/browse/MARATHON-7694)
@@ -72,9 +73,26 @@ RUN wget -qO - http://apt.numeezy.fr/numeezy.asc | apt-key add - && \
       freeipa-client && \
     rm -rf /var/lib/apt/lists/*;
 
+RUN apt-get update -qq && apt-get install -yqq --no-install-recommends \
+       apt-utils && \
+    rm -rf /var/lib/apt/lists/*;
+
+RUN apt-get update -qq && apt-get install -yqq --no-install-recommends \
+       libssl-dev && \
+    rm -rf /var/lib/apt/lists/*;
+
+#Install hdfs-sentry plugin
+#RUN wget https://archive.cloudera.com/cdh5/debian/jessie/amd64/cdh/pool/contrib/s/sentry/sentry-hdfs-plugin_1.5.1+cdh5.13.0+410-1.cdh5.13.0.p0.34~jessie-cdh5.13.0_all.deb &&\
+#    dpkg --install sentry*.deb
+RUN sudo wget 'https://archive.cloudera.com/cdh5/debian/jessie/amd64/cdh/cloudera.list'  -O /etc/apt/sources.list.d/cloudera.list && \
+     apt-get update &&  apt-get install -y --no-install-recommends apt-utils  && \ 
+     apt-get install -y  aptitude && aptitude install -y sentry-hdfs-plugin
+
 RUN mkdir -p /usr/lib/impala/lib/ && chown $NB_UID /usr/lib/impala/lib
 
 RUN sed -i '2iln -s /etc/hadoop/conf/sentry-libs/hive-hcatalog-core.jar /usr/lib/impala/lib/hive-hcatalog-core.jar' /usr/local/bin/start-notebook.sh && cat /usr/local/bin/start-notebook.sh
+
+RUN conda install python=3.5.2
 
 WORKDIR /home/jovyan/work
 
