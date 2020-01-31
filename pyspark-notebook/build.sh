@@ -1,10 +1,28 @@
 #!/bin/bash
 set -xe
 
-NO_CACHE="--no-cache"
+NO_CACHE=""
+export DOCKER_BUILDKIT=0
+
+while (( $# )); do
+    case $1 in
+        --no-cache) NO_CACHE="--no-cache"
+        ;;
+        --buildkit) export DOCKER_BUILDKIT=1
+        ;;
+        --*) echo "Bad Option $1"
+        ;;
+        *) TYPE=$1
+        ;;
+        *) break
+	;;
+    esac
+    shift
+done
+
 
 # Builds a pyspark docker image based on $PYTHON_CONTAINER
-TARGET_TAG=$1
+TARGET_TAG=$TYPE
 PYTHON_CONTAINER="python:3.7-slim-stretch"
 
 # Get the matching tag Dockerfile and other resources for Jupyter notebooks
