@@ -91,8 +91,6 @@ RUN mkdir -p /usr/lib/impala/lib/ && chown $NB_UID /usr/lib/impala/lib
 
 RUN sed -i '2iln -s /etc/hadoop/conf/sentry-libs/hive-hcatalog-core.jar /usr/lib/impala/lib/hive-hcatalog-core.jar' /usr/local/bin/start-notebook.sh && cat /usr/local/bin/start-notebook.sh
 
-RUN conda install python=3.5.2
-
 WORKDIR /home/jovyan/work
 
 USER $NB_UID
