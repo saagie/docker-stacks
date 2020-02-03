@@ -18,6 +18,19 @@ Please visit the documentation site for help using and contributing to this imag
 * A [start.sh](../base-notebook/start.sh) script useful for running alternative commands in the container (e.g. `ipython`, `jupyter kernelgateway`, `jupyter lab`)
 * Options for a self-signed HTTPS certificate and passwordless `sudo`
 
+## Build container
+
+Container is built using python:3.6-slim-stretch in place of the usual ubuntu base for jupyter notebook images.
+
+Thus we need to build base-notebook/minimal-notebook/scipy-notebook before pyspark one can be built.
+
+For that we use a shell script `build.sh` that can be run using cache or without cache with `--no-cache` parameter, and with buildkit (still experimental/at your own risks) with `--buildkit`.
+
+```
+./build.sh image-name --no-cache 
+```
+
+
 ## Basic Use
 
 The following command starts a container with the Notebook server listening for HTTP connections on port 8888 with a randomly generated authentication token configured.

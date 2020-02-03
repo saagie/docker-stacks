@@ -66,27 +66,26 @@ RUN apt-get update -qq && apt-get install -yqq --no-install-recommends \
       vim nano gnupg2 && \
     rm -rf /var/lib/apt/lists/*;
 
-# Instll freeip client
+# Install freeip client
 RUN wget -qO - http://apt.numeezy.fr/numeezy.asc | apt-key add - && \
     echo 'deb http://apt.numeezy.fr stretch main' >> /etc/apt/sources.list && \
     apt-get update -qq && apt-get install -yqq --no-install-recommends \
       freeipa-client && \
     rm -rf /var/lib/apt/lists/*;
 
-RUN apt-get update -qq && apt-get install -yqq --no-install-recommends \
-       apt-utils && \
-    rm -rf /var/lib/apt/lists/*;
+# Install libssl1 manually (needed dependency for hdfs-entry-plugin)
+RUN curl -O "http://ftp.debian.org/debian/pool/main/o/openssl/libssl1.0.0_1.0.1t-1+deb8u8_amd64.deb" \
+    && dpkg -i libssl1.0.0_1.0.1t-1+deb8u8_amd64.deb \
+    && rm libssl1.0.0_1.0.1t-1+deb8u8_amd64.deb
 
-RUN apt-get update -qq && apt-get install -yqq --no-install-recommends \
-       libssl-dev && \
-    rm -rf /var/lib/apt/lists/*;
+# Add cloudera sources for sentry-hdfs-plugin (Jessie)
+RUN sudo wget 'https://archive.cloudera.com/cdh5/debian/jessie/amd64/cdh/cloudera.list' \
+      -O /etc/apt/sources.list.d/cloudera.list
 
-#Install hdfs-sentry plugin
-#RUN wget https://archive.cloudera.com/cdh5/debian/jessie/amd64/cdh/pool/contrib/s/sentry/sentry-hdfs-plugin_1.5.1+cdh5.13.0+410-1.cdh5.13.0.p0.34~jessie-cdh5.13.0_all.deb &&\
-#    dpkg --install sentry*.deb
-RUN sudo wget 'https://archive.cloudera.com/cdh5/debian/jessie/amd64/cdh/cloudera.list'  -O /etc/apt/sources.list.d/cloudera.list && \
-     apt-get update &&  apt-get install -y --no-install-recommends apt-utils  && \ 
-     apt-get install -y  aptitude && aptitude install -y sentry-hdfs-plugin
+# Install sentry-hdfs-plugin unauhenticated as CDH5 is only Jessie compatible and still uses SHA1 (stretch needs SHA256)
+RUN apt-get update -qq \
+    && apt-get install -yqq --allow-unauthenticated --no-install-recommends \
+      sentry-hdfs-plugin
 
 RUN mkdir -p /usr/lib/impala/lib/ && chown $NB_UID /usr/lib/impala/lib
 
