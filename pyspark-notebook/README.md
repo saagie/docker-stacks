@@ -1,9 +1,12 @@
-![docker pulls](https://img.shields.io/docker/pulls/jupyter/pyspark-notebook.svg) ![docker stars](https://img.shields.io/docker/stars/jupyter/pyspark-notebook.svg) [![](https://images.microbadger.com/badges/image/jupyter/pyspark-notebook.svg)](https://microbadger.com/images/jupyter/pyspark-notebook "jupyter/pyspark-notebook image metadata")
+[![docker pulls](https://img.shields.io/docker/pulls/jupyter/pyspark-notebook.svg)](https://hub.docker.com/r/jupyter/pyspark-notebook/) [![docker stars](https://img.shields.io/docker/stars/jupyter/pyspark-notebook.svg)](https://hub.docker.com/r/jupyter/pyspark-notebook/) [![image metadata](https://images.microbadger.com/badges/image/jupyter/pyspark-notebook.svg)](https://microbadger.com/images/jupyter/pyspark-notebook "jupyter/pyspark-notebook image metadata")
 
 # Jupyter Notebook Python, Spark, Mesos Stack
 
-## What it Gives You
+Please visit the documentation site for help using and contributing to this image and others.
 
+* [Jupyter Docker Stacks on ReadTheDocs](http://jupyter-docker-stacks.readthedocs.io/en/latest/index.html)
+* [Selecting an Image :: Core Stacks :: jupyter/pyspark-notebook](http://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-pyspark-notebook)
+* [Image Specifics :: Apache Spark](http://jupyter-docker-stacks.readthedocs.io/en/latest/using/specifics.html#apache-spark)
 * Jupyter Notebook 4.3.x
 * Conda Python 3.x and Python 2.7.x environments
 * pyspark, pandas, matplotlib, scipy, seaborn, scikit-learn pre-installed
@@ -14,6 +17,19 @@
 * A [start-singleuser.sh](../base-notebook/start-singleuser.sh) script useful for running a single-user instance of the Notebook server, as required by JupyterHub
 * A [start.sh](../base-notebook/start.sh) script useful for running alternative commands in the container (e.g. `ipython`, `jupyter kernelgateway`, `jupyter lab`)
 * Options for a self-signed HTTPS certificate and passwordless `sudo`
+
+## Build container
+
+Container is built using python:3.6-slim-stretch in place of the usual ubuntu base for jupyter notebook images.
+
+Thus we need to build base-notebook/minimal-notebook/scipy-notebook before pyspark one can be built.
+
+For that we use a shell script `build.sh` that can be run using cache or without cache with `--no-cache` parameter, and with buildkit (still experimental/at your own risks) with `--buildkit`.
+
+```
+./build.sh image-name --no-cache 
+```
+
 
 ## Basic Use
 

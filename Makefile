@@ -1,17 +1,16 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+.PHONY: docs help test
 
-.PHONY: build-all help environment-check release-all
-
-# Use bash for inline if-statements in test target
+# Use bash for inline if-statements in arch_patch target
 SHELL:=bash
-
 OWNER:=jupyter
-# need to list these manually because there's a dependency tree
 ARCH:=$(shell uname -m)
+DIFF_RANGE?=master...HEAD
 
+# Need to list the images in build dependency order
 ifeq ($(ARCH),ppc64le)
-ALL_STACKS:=base-notebook 
+ALL_STACKS:=base-notebook
 else
 ALL_STACKS:=base-notebook \
 	minimal-notebook \
@@ -25,10 +24,6 @@ endif
 
 ALL_IMAGES:=$(ALL_STACKS)
 
-GIT_MASTER_HEAD_SHA:=$(shell git rev-parse --short=12 --verify HEAD)
-
-RETRIES:=10
-
 help:
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 	@echo "jupyter/docker-stacks"
@@ -38,7 +33,7 @@ help:
 	@grep -E '^[a-zA-Z0-9_%/-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 arch_patch/%: ## apply hardware architecture specific patches to the Dockerfile
-	if [ -e ./$(notdir $@)/Dockerfile.$(ARCH).patch ]; then \
+	@if [ -e ./$(notdir $@)/Dockerfile.$(ARCH).patch ]; then \
 		if [ -e ./$(notdir $@)/Dockerfile.orig ]; then \
                		cp -f ./$(notdir $@)/Dockerfile.orig ./$(notdir $@)/Dockerfile;\
 		else\
@@ -60,48 +55,36 @@ dev/%: PORT?=8888
 dev/%: ## run a foreground container for a stack
 	docker run -it --rm -p $(PORT):8888 $(DARGS) $(OWNER)/$(notdir $@) $(ARGS)
 
-environment-check:
-	test -e ~/.docker-stacks-builder
+dev-env: ## install libraries required to build docs and run tests
+	pip install -r requirements-dev.txt
 
-push/%: ## push the latest and HEAD git SHA tags for a stack to Docker Hub
-	docker push $(OWNER)/$(notdir $@):latest
-	docker push $(OWNER)/$(notdir $@):$(GIT_MASTER_HEAD_SHA)
+docs: ## build HTML documentation
+	make -C docs html
 
-push-all: $(ALL_IMAGES:%=push/%) ## push all stacks
+n-docs-diff: ## number of docs/ files changed since branch from master
+	@git diff --name-only $(DIFF_RANGE) -- docs/ ':!docs/locale' | wc -l | awk '{print $$1}'
 
-refresh/%: ## pull the latest image from Docker Hub for a stack
-# skip if error: a stack might not be on dockerhub yet
-	-docker pull $(OWNER)/$(notdir $@):latest
 
-refresh-all: $(ALL_IMAGES:%=refresh/%) ## refresh all stacks
+n-other-diff: ## number of files outside docs/ changed since branch from master
+	@git diff --name-only $(DIFF_RANGE) -- ':!docs/' | wc -l | awk '{print $$1}'
 
-release-all: environment-check \
-	refresh-all \
-	build-test-all \
-	tag-all \
-	push-all
-release-all: ## build, test, tag, and push all stacks
+tx-en: ## rebuild en locale strings and push to master (req: GH_TOKEN)
+	@git config --global user.email "travis@travis-ci.org"
+	@git config --global user.name "Travis CI"
+	@git checkout master
 
-retry/%:
-	@for i in $$(seq 1 $(RETRIES)); do \
-		make $(notdir $@) ; \
-		if [[ $$? == 0 ]]; then exit 0; fi; \
-		echo "Sleeping for $$((i * 60))s before retry" ; \
-		sleep $$((i * 60)) ; \
-	done ; exit 1
+	@make -C docs clean gettext
+	@cd docs && sphinx-intl update -p _build/gettext -l en
 
-tag/%: ##tag the latest stack image with the HEAD git SHA
-	docker tag -f $(OWNER)/$(notdir $@):latest $(OWNER)/$(notdir $@):$(GIT_MASTER_HEAD_SHA)
+	@git add docs/locale/en
+	@git commit -m "[ci skip] Update en source strings (build: $$TRAVIS_JOB_NUMBER)"
 
-tag-all: $(ALL_IMAGES:%=tag/%) ## tag all stacks
+	@git remote add origin-tx https://$${GH_TOKEN}@github.com/jupyter/docker-stacks.git
+	@git push -u origin-tx master
 
-test/%: ## run a stack container, check for jupyter server liveliness
-	@-docker rm -f iut
-	@docker run -d --name iut $(OWNER)/$(notdir $@)
-	@for i in $$(seq 0 9); do \
-		sleep $$i; \
-		docker exec iut bash -c 'wget http://localhost:8888 -O- | grep -i jupyter'; \
-		if [[ $$? == 0 ]]; then exit 0; fi; \
-	done ; exit 1
 
-test-all: $(ALL_IMAGES:%=test/%) ## test all stacks
+test/%: ## run tests against a stack
+	@TEST_IMAGE="$(OWNER)/$(notdir $@)" pytest test
+
+test/base-notebook: ## test supported options in the base notebook
+	@TEST_IMAGE="$(OWNER)/$(notdir $@)" pytest test base-notebook/test

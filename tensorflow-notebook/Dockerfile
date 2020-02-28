@@ -1,13 +1,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-FROM jupyter/scipy-notebook
+ARG BASE_CONTAINER=jupyter/scipy-notebook
+FROM $BASE_CONTAINER
 
-MAINTAINER Jupyter Project <jupyter@googlegroups.com>
+LABEL maintainer="Jupyter Project <jupyter@googlegroups.com>"
 
-USER $NB_USER
-
-# Install Python 3 Tensorflow
-RUN conda install --quiet --yes 'tensorflow=1.0*'
-
-# Install Python 2 Tensorflow
-RUN conda install --quiet --yes -n python2 'tensorflow=1.0*'
+# Install Tensorflow
+RUN pip install --quiet \
+    'tensorflow==2.0.0' && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
